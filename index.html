@@ -159,6 +159,9 @@
     border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink);
   }
   .choices { display: flex; gap: 8px; }
+  .choices.stack { flex-direction: column; }
+  #laterInput { margin-top: 8px; }
+  #laterInput[hidden] { display: none; }
   .choice { flex: 1; }
   .choice input { position: absolute; opacity: 0; }
   .choice span {
@@ -182,7 +185,7 @@
     <ul class="steps">
       <li><b>1</b>點書勾選</li>
       <li><b>2</b>按「我要認領」</li>
-      <li><b>3</b>填您的名字、選取書地點GCTC或總辦</li>
+      <li><b>3</b>填上您的名字、取書時間、地點GCTC或總辦</li>
     </ul>
   </header>
 
@@ -215,6 +218,9 @@
     { key: '較舊或有劃線', label: '有劃線筆記或久放泛黃', note: '部分書頁有劃線筆記，或久放紙張泛黃。' }
   ];
   var PICKUPS = ['GCTC', '總辦'];
+  // 取書時間：最後一個選項要另外填日期
+  var TIMES = ['ASF 之前', '11/19 北區大使命禱告會'];
+  var LATER = '更晚的日期';
   var REFRESH_MS = 30000;
 
   var state = { books: [], claims: {} };
@@ -241,7 +247,7 @@
       var req = fn === 'claim'
         // text/plain 避免瀏覽器先送 CORS 預檢，Apps Script 不支援預檢
         ? fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ name: args[0], pickup: args[1], ids: args[2] }) })
+            body: JSON.stringify({ name: args[0], pickup: args[1], ids: args[2], when: args[3] }) })
         : fetch(window.API_URL + '?action=' + API_ROUTES[fn] + '&t=' + Date.now());
       return req.then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -370,6 +376,9 @@
     var nameEl = document.getElementById('nameInput');
     var nameVal = nameEl ? nameEl.value : savedName();
     var pickVal = (document.querySelector('input[name="pickup"]:checked') || {}).value || '';
+    var whenVal = (document.querySelector('input[name="when"]:checked') || {}).value || '';
+    var laterEl = document.getElementById('laterInput');
+    var laterVal = laterEl ? laterEl.value : '';
     var html = '<h3 id="modalTitle">確認認領 ' + ids.length + ' 本書</h3>' + (message || '') +
       '<ul class="picked">' + ids.map(function (id) {
         var b = bookById(id);
@@ -377,7 +386,13 @@
       }).join('') + '</ul>' +
       '<label class="field" for="nameInput">您的名字</label>' +
       '<input type="text" id="nameInput" maxlength="30" autocomplete="name" placeholder="讓我知道是誰認領的" value="' + esc(nameVal) + '">' +
-      '<label class="field">取書方式</label>' +
+      '<label class="field">取書時間</label>' +
+      '<div class="choices stack">' + TIMES.concat([LATER + '（自填）']).map(function (t, i) {
+        var v = i < TIMES.length ? t : LATER;
+        return '<label class="choice"><input type="radio" name="when" value="' + esc(v) + '"' + (whenVal === v ? ' checked' : '') + '><span>' + esc(t) + '</span></label>';
+      }).join('') + '</div>' +
+      '<input type="text" id="laterInput" maxlength="40" placeholder="請填希望的日期，例如 12/5" value="' + esc(laterVal) + '"' + (whenVal === LATER ? '' : ' hidden') + '>' +
+      '<label class="field">取書地點</label>' +
       '<div class="choices">' + PICKUPS.map(function (p) {
         return '<label class="choice"><input type="radio" name="pickup" value="' + esc(p) + '"' + (pickVal === p ? ' checked' : '') + '><span>' + esc(p) + '</span></label>';
       }).join('') + '</div>' +
@@ -420,7 +435,15 @@
     var name = document.getElementById('nameInput').value.trim();
     var pick = document.querySelector('input[name="pickup"]:checked');
     if (!name) { formError('請填寫名字'); document.getElementById('nameInput').focus(); return; }
-    if (!pick) { formError('請選擇取書方式'); return; }
+    var whenPick = document.querySelector('input[name="when"]:checked');
+    if (!whenPick) { formError('請選擇取書時間'); return; }
+    var when = whenPick.value;
+    if (when === LATER) {
+      var later = document.getElementById('laterInput').value.trim();
+      if (!later) { formError('請填寫希望的取書日期'); document.getElementById('laterInput').focus(); return; }
+      when = LATER + '：' + later;
+    }
+    if (!pick) { formError('請選擇取書地點'); return; }
     var ids = selectedIds();
     var btn = document.getElementById('submitBtn');
     busy = true; btn.disabled = true; btn.textContent = '檢查中…';
@@ -435,12 +458,12 @@
         return;
       }
       btn.textContent = '送出中…';
-      return call('claim', name, pick.value, ids).then(function (res) {
+      return call('claim', name, pick.value, ids, when).then(function (res) {
         busy = false;
         if (res.claims) applyClaims(res.claims);
         if (res.ok) {
           saveName(name);
-          showDone(res.claimed, pick.value);
+          showDone(res.claimed, pick.value, when);
         } else if (res.taken) {
           openForm(takenMessage(res.taken));
         } else {
@@ -454,12 +477,12 @@
     });
   }
 
-  function showDone(ids, pickup) {
+  function showDone(ids, pickup, when) {
     ids.forEach(function (id) { delete selected[id]; });
     render();
     document.getElementById('modal').innerHTML =
       '<h3 id="modalTitle">認領成功！</h3>' +
-      '<p class="msg ok">共 ' + ids.length + ' 本，取書方式：' + esc(pickup) + '</p>' +
+      '<p class="msg ok">共 ' + ids.length + ' 本<br>取書時間：' + esc(when) + '<br>取書地點：' + esc(pickup) + '</p>' +
       '<ul class="picked">' + ids.map(function (id) { return '<li><span>' + esc((bookById(id) || {}).title || id) + '</span></li>'; }).join('') + '</ul>' +
       '<p class="sec-note">建議截圖留存。如果需要更改，請直接跟我說。</p>' +
       '<div class="actions"><button class="btn" type="button" id="cancelBtn">好</button></div>';
@@ -498,6 +521,12 @@
     if (e.target.id === 'submitBtn') submit();
     var rm = e.target.getAttribute && e.target.getAttribute('data-remove');
     if (rm) { delete selected[rm]; render(); openForm(); }
+  });
+  document.getElementById('modalBg').addEventListener('change', function (e) {
+    if (e.target.name !== 'when') return;
+    var input = document.getElementById('laterInput');
+    input.hidden = e.target.value !== LATER;
+    if (!input.hidden) input.focus();
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && !busy) refreshClaims(); });
