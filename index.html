@@ -207,8 +207,9 @@
 <script>window.API_URL = "https://script.google.com/macros/s/AKfycbzeixTHIIy9r85HYBZ0W8Vmur8oBSlLFDem8HJL17t6i1uOTeg48Zsg6GD47ultXJFZHg/exec";</script>
 <script>
   var CATS = [
-    { key: '幾乎全新', note: '幾乎沒翻過，狀況很好。' },
-    { key: '較舊或有劃線', note: '看得出歲月痕跡，部分有劃線或筆記。' }
+    // key 對應試算表「類別」欄，label 是網頁上顯示的標題
+    { key: '幾乎全新', label: '幾乎全新', note: '幾乎沒翻過，狀況很好。' },
+    { key: '較舊或有劃線', label: '書況普通或有劃線筆記', note: '書況普通，部分書頁有劃線或筆記。' }
   ];
   var PICKUPS = ['GCTC', '總辦'];
   var REFRESH_MS = 30000;
@@ -297,7 +298,7 @@
       var all = state.books.filter(function (b) { return b.cat === cat.key; });
       var free = all.filter(function (b) { return !state.claims[b.id]; });
       var shown = onlyFree ? free : all;
-      html += '<section><h2>' + esc(cat.key) + '</h2>' +
+      html += '<section><h2>' + esc(cat.label) + '</h2>' +
         '<p class="sec-note">' + esc(cat.note) + ' 還有 ' + free.length + ' / ' + all.length + ' 本可認領。</p>';
       if (!shown.length) {
         html += '<p class="empty">這一區的書都被認領囉！</p>';
@@ -311,7 +312,7 @@
   }
 
   function renderTabs() {
-    var opts = [{ key: 'all', label: '全部' }].concat(CATS.map(function (c) { return { key: c.key, label: c.key }; }));
+    var opts = [{ key: 'all', label: '全部' }].concat(CATS.map(function (c) { return { key: c.key, label: c.label }; }));
     document.getElementById('tabs').innerHTML = opts.map(function (o) {
       return '<button class="tab" type="button" data-cat="' + esc(o.key) + '" aria-pressed="' + (filterCat === o.key) + '">' + esc(o.label) + '</button>';
     }).join('');
@@ -371,7 +372,7 @@
         var b = bookById(id);
         return '<li><span>' + esc(b ? b.title : id) + '</span><button type="button" data-remove="' + esc(id) + '">移除</button></li>';
       }).join('') + '</ul>' +
-      '<label class="field" for="nameInput">你的名字</label>' +
+      '<label class="field" for="nameInput">您的名字</label>' +
       '<input type="text" id="nameInput" maxlength="30" autocomplete="name" placeholder="讓我知道是誰認領的" value="' + esc(nameVal) + '">' +
       '<label class="field">取書方式</label>' +
       '<div class="choices">' + PICKUPS.map(function (p) {
@@ -402,7 +403,7 @@
   }
 
   function takenMessage(list) {
-    return '<p class="msg warn">不好意思，這些書剛剛被認領了，已幫你移除：<br>' +
+    return '<p class="msg warn">不好意思，這些書剛剛被認領了，已幫您移除：<br>' +
       list.map(function (t) { return '・' + esc(t.title) + '（' + esc(t.by) + '）'; }).join('<br>') + '</p>';
   }
 
