@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="婷源移居中">
+<meta property="og:description" content="同工們平安，近期要搬家，有中意的書歡迎認領，先勾先拿。">
+<meta property="og:image" content="https://kyonnkyonko.github.io/books/covers/n01.jpg">
+<title>婷源移居中</title>
+<style>
+  :root {
+    --bg: #f6f1e8;
+    --card: #fffdf8;
+    --ink: #2b2620;
+    --muted: #7a6f62;
+    --line: #e4dccd;
+    --accent: #b5562f;
+    --accent-soft: #f6e3d8;
+    --ok: #3f7a4f;
+    --ok-soft: #e1efe3;
+    --warn: #a2401f;
+    --warn-soft: #fbe6dd;
+    --cover-bg: #ece4d6;
+    --shadow: 0 1px 2px rgba(60, 40, 20, .08), 0 4px 14px rgba(60, 40, 20, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1d1a17;
+      --card: #28241f;
+      --ink: #f1ebe2;
+      --muted: #b0a597;
+      --line: #3b352e;
+      --accent: #e08a5f;
+      --accent-soft: #3f2a20;
+      --ok: #8cc79a;
+      --ok-soft: #22352a;
+      --warn: #f09a78;
+      --warn-soft: #432419;
+      --cover-bg: #332d27;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.5;
+    padding-bottom: 96px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  header { padding: 32px 0 8px; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: .02em; }
+  .lead { color: var(--muted); margin: 0 0 4px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+  .steps b { color: var(--accent); margin-right: 4px; }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg);
+    padding: 12px 0; margin-top: 12px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 6px 12px; border-radius: 999px; font-size: 14px; cursor: pointer;
+  }
+  .tab[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .status { margin-left: auto; font-size: 13px; color: var(--muted); }
+
+  section { margin-top: 24px; }
+  h2 { font-size: 19px; margin: 0 0 2px; }
+  .sec-note { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+  .book {
+    display: flex; flex-direction: column;
+    background: var(--card); border: 2px solid transparent; border-radius: 10px;
+    box-shadow: var(--shadow); overflow: hidden;
+    transition: border-color .15s, transform .15s;
+  }
+  .book:hover { transform: translateY(-2px); }
+  .book.selected { border-color: var(--accent); }
+  .book.taken .pick { cursor: default; opacity: .55; }
+  .book.taken:hover { transform: none; }
+  .pick {
+    position: relative; display: flex; flex-direction: column; flex: 1;
+    border: 0; background: none; cursor: pointer;
+    text-align: left; padding: 0; font: inherit; color: inherit;
+  }
+  .pick:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .site {
+    display: inline-block; margin: 0 10px 10px; font-size: 12px;
+    color: var(--accent); text-decoration: none;
+  }
+  .site:hover { text-decoration: underline; }
+  .status.err { color: var(--warn); }
+  .cover { aspect-ratio: 3 / 4; background: var(--cover-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cover img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .cover .fallback { padding: 14px; font-size: 15px; font-weight: 600; text-align: center; color: var(--muted); }
+  .meta { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .title { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .author { font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .badge {
+    position: absolute; top: 8px; right: 8px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255, 255, 255, .9); border: 2px solid var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff;
+  }
+  .book.selected .badge { background: var(--accent); border-color: var(--accent); }
+  .taken-tag {
+    position: absolute; left: 0; right: 0; top: 40%;
+    background: rgba(43, 38, 32, .85); color: #fff; font-size: 13px; text-align: center; padding: 6px 4px;
+  }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: var(--card); border-top: 1px solid var(--line);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, .08);
+    transform: translateY(110%); transition: transform .2s;
+  }
+  .bar.show { transform: none; }
+  .bar .wrap { display: flex; align-items: center; gap: 12px; padding-top: 12px; padding-bottom: 12px; }
+  .bar .count { flex: 1; font-size: 15px; }
+  .btn {
+    border: 0; border-radius: 8px; padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: #fff;
+  }
+  .btn.ghost { background: transparent; color: var(--muted); font-weight: 400; }
+  .btn:disabled { opacity: .5; cursor: wait; }
+
+  .modal-bg {
+    position: fixed; inset: 0; z-index: 20; background: rgba(20, 15, 10, .45);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.show { display: flex; }
+  @media (min-width: 600px) { .modal-bg { align-items: center; } }
+  .modal {
+    background: var(--card); width: 100%; max-width: 480px; max-height: 90vh; overflow: auto;
+    border-radius: 14px 14px 0 0; padding: 20px 16px 24px;
+  }
+  @media (min-width: 600px) { .modal { border-radius: 14px; padding: 24px; } }
+  .modal h3 { margin: 0 0 12px; font-size: 18px; }
+  .picked { margin: 0 0 16px; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 8px; }
+  .picked li { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+  .picked li:first-child { border-top: 0; }
+  .picked button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 13px; flex-shrink: 0; }
+  label.field { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  input[type="text"] {
+    width: 100%; padding: 10px 12px; font: inherit; font-size: 16px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink);
+  }
+  .choices { display: flex; gap: 8px; }
+  .choice { flex: 1; }
+  .choice input { position: absolute; opacity: 0; }
+  .choice span {
+    display: block; text-align: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+  }
+  .choice input:checked + span { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .choice input:focus-visible + span { outline: 2px solid var(--accent); }
+  .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .msg { border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 0 0 12px; }
+  .msg.warn { background: var(--warn-soft); color: var(--warn); }
+  .msg.ok { background: var(--ok-soft); color: var(--ok); }
+  .empty { color: var(--muted); font-size: 14px; padding: 12px 0; }
+  .loading { text-align: center; padding: 60px 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>婷源移居中</h1>
+    <p class="lead">同工們平安，因為近期要預備搬家，若您有中意的書籍，歡迎下方認領、勾選，不限本數，先勾先拿。</p>
+    <ul class="steps">
+      <li><b>1</b>點書勾選</li>
+      <li><b>2</b>按「我要認領」</li>
+      <li><b>3</b>填名字、選取書地點後送出</li>
+    </ul>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <label class="toggle"><input type="checkbox" id="onlyFree"> 只看還沒被認領的</label>
+    <span class="status" id="status"></span>
+  </div>
+
+  <main id="list"><div class="loading">書單載入中…</div></main>
+</div>
+
+<div class="bar" id="bar">
+  <div class="wrap">
+    <span class="count" id="count"></span>
+    <button class="btn ghost" id="clearBtn" type="button">清除</button>
+    <button class="btn" id="openBtn" type="button">我要認領</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" id="modal"></div>
+</div>
+
+<script>window.API_URL = "https://script.google.com/macros/s/AKfycbzeixTHIIy9r85HYBZ0W8Vmur8oBSlLFDem8HJL17t6i1uOTeg48Zsg6GD47ultXJFZHg/exec";</script>
+<script>
+  var CATS = [
+    { key: '幾乎全新', note: '幾乎沒翻過，狀況很好。' },
+    { key: '較舊或有劃線', note: '看得出歲月痕跡，部分有劃線或筆記。' }
+  ];
+  var PICKUPS = ['GCTC', '總辦'];
+  var REFRESH_MS = 30000;
+
+  var state = { books: [], claims: {} };
+  var selected = {};
+  var filterCat = 'all';
+  var onlyFree = false;
+  var busy = false;
+
+  // 頁面出錯時顯示在右上角，方便回報
+  window.addEventListener('error', function (e) { showError(e.message); });
+  window.addEventListener('unhandledrejection', function (e) { showError(e.reason && (e.reason.message || e.reason)); });
+  function showError(msg) {
+    var el = document.getElementById('status');
+    el.textContent = '出錯了：' + msg;
+    el.classList.add('err');
+  }
+
+  // GitHub 版用 fetch 呼叫 Apps Script（window.API_URL）；
+  // Apps Script 版用 google.script.run；本機預覽時改用 window.MOCK_API。
+  var API_ROUTES = { getState: 'state', getClaims: 'claims' };
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (window.API_URL) {
+      var req = fn === 'claim'
+        // text/plain 避免瀏覽器先送 CORS 預檢，Apps Script 不支援預檢
+        ? fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ name: args[0], pickup: args[1], ids: args[2] }) })
+        : fetch(window.API_URL + '?action=' + API_ROUTES[fn] + '&t=' + Date.now());
+      return req.then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+    }
+    return new Promise(function (resolve, reject) {
+      if (window.google && google.script && google.script.run) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      } else {
+        window.MOCK_API[fn].apply(null, args).then(resolve, reject);
+      }
+    });
+  }
+
+  // 進站：書單和認領狀況一起抓
+  function loadAll() {
+    return call('getState').then(function (s) {
+      state.books = s.books;
+      applyClaims(s.claims);
+    }).catch(function () {
+      document.getElementById('list').innerHTML = '<div class="loading">讀不到書單，請重新整理頁面。</div>';
+    });
+  }
+
+  // 之後只更新認領狀況
+  function refreshClaims() {
+    return call('getClaims').then(applyClaims).catch(function () { setStatus('更新失敗，稍後再試'); });
+  }
+
+  function applyClaims(claims) {
+    state.claims = claims || {};
+    // 已經被別人領走的書，自動從我的勾選中拿掉
+    Object.keys(selected).forEach(function (id) { if (state.claims[id]) delete selected[id]; });
+    render();
+    setStatus('已更新 ' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }));
+  }
+
+  function setStatus(t) {
+    var el = document.getElementById('status');
+    el.textContent = t;
+    el.classList.remove('err');
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function render() {
+    renderTabs();
+    var html = '';
+    CATS.forEach(function (cat) {
+      if (filterCat !== 'all' && filterCat !== cat.key) return;
+      var all = state.books.filter(function (b) { return b.cat === cat.key; });
+      var free = all.filter(function (b) { return !state.claims[b.id]; });
+      var shown = onlyFree ? free : all;
+      html += '<section><h2>' + esc(cat.key) + '</h2>' +
+        '<p class="sec-note">' + esc(cat.note) + ' 還有 ' + free.length + ' / ' + all.length + ' 本可認領。</p>';
+      if (!shown.length) {
+        html += '<p class="empty">這一區的書都被認領囉！</p>';
+      } else {
+        html += '<div class="grid">' + shown.map(card).join('') + '</div>';
+      }
+      html += '</section>';
+    });
+    document.getElementById('list').innerHTML = html;
+    renderBar();
+  }
+
+  function renderTabs() {
+    var opts = [{ key: 'all', label: '全部' }].concat(CATS.map(function (c) { return { key: c.key, label: c.key }; }));
+    document.getElementById('tabs').innerHTML = opts.map(function (o) {
+      return '<button class="tab" type="button" data-cat="' + esc(o.key) + '" aria-pressed="' + (filterCat === o.key) + '">' + esc(o.label) + '</button>';
+    }).join('');
+  }
+
+  function card(b) {
+    var claim = state.claims[b.id];
+    var sel = !!selected[b.id];
+    var cls = 'book' + (claim ? ' taken' : '') + (sel ? ' selected' : '');
+    var cover = b.cover
+      ? '<img src="' + esc(b.cover) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="coverFail(this)" data-title="' + esc(b.title) + '">'
+      : '<div class="fallback">' + esc(b.title) + '</div>';
+    var link = /^https?:\/\//.test(b.link || '')
+      ? '<a class="site" href="' + esc(b.link) + '" target="_blank" rel="noopener">書籍網站 ↗</a>'
+      : '';
+    return '<div class="' + cls + '">' +
+      '<button type="button" class="pick" data-id="' + esc(b.id) + '"' +
+      (claim ? ' disabled aria-disabled="true"' : ' aria-pressed="' + sel + '"') + '>' +
+      '<div class="cover">' + cover + '</div>' +
+      (claim ? '<div class="taken-tag">' + esc(claim.name) + ' 已認領</div>' : '<span class="badge" aria-hidden="true">' + (sel ? '✓' : '') + '</span>') +
+      '<div class="meta"><span class="title">' + esc(b.title) + '</span><span class="author">' + esc(b.author) + '</span></div>' +
+      '</button>' + link + '</div>';
+  }
+
+  function coverFail(img) {
+    var d = document.createElement('div');
+    d.className = 'fallback';
+    d.textContent = img.getAttribute('data-title');
+    img.parentNode.replaceChild(d, img);
+  }
+
+  function selectedIds() { return Object.keys(selected); }
+
+  function renderBar() {
+    var n = selectedIds().length;
+    document.getElementById('bar').classList.toggle('show', n > 0);
+    document.getElementById('count').textContent = '已選 ' + n + ' 本';
+  }
+
+  function bookById(id) {
+    for (var i = 0; i < state.books.length; i++) if (state.books[i].id === id) return state.books[i];
+    return null;
+  }
+
+  // ---------- 認領表單 ----------
+  function savedName() { try { return localStorage.getItem('claimName') || ''; } catch (e) { return ''; } }
+  function saveName(n) { try { localStorage.setItem('claimName', n); } catch (e) {} }
+
+  function openForm(message) {
+    var ids = selectedIds();
+    if (!ids.length) { forceClose(); return; }
+    var nameEl = document.getElementById('nameInput');
+    var nameVal = nameEl ? nameEl.value : savedName();
+    var pickVal = (document.querySelector('input[name="pickup"]:checked') || {}).value || '';
+    var html = '<h3 id="modalTitle">確認認領 ' + ids.length + ' 本書</h3>' + (message || '') +
+      '<ul class="picked">' + ids.map(function (id) {
+        var b = bookById(id);
+        return '<li><span>' + esc(b ? b.title : id) + '</span><button type="button" data-remove="' + esc(id) + '">移除</button></li>';
+      }).join('') + '</ul>' +
+      '<label class="field" for="nameInput">你的名字</label>' +
+      '<input type="text" id="nameInput" maxlength="30" autocomplete="name" placeholder="讓我知道是誰認領的" value="' + esc(nameVal) + '">' +
+      '<label class="field">取書方式</label>' +
+      '<div class="choices">' + PICKUPS.map(function (p) {
+        return '<label class="choice"><input type="radio" name="pickup" value="' + esc(p) + '"' + (pickVal === p ? ' checked' : '') + '><span>' + esc(p) + '</span></label>';
+      }).join('') + '</div>' +
+      '<div class="actions"><button class="btn ghost" type="button" id="cancelBtn">再看看</button>' +
+      '<button class="btn" type="button" id="submitBtn">送出認領</button></div>';
+    document.getElementById('modal').innerHTML = html;
+    document.getElementById('modalBg').classList.add('show');
+  }
+
+  function isOpen() { return document.getElementById('modalBg').classList.contains('show'); }
+
+  function closeModal() {
+    if (busy) return;
+    forceClose();
+  }
+  function forceClose() { document.getElementById('modalBg').classList.remove('show'); }
+
+  function formError(text) {
+    var old = document.querySelector('#modal .msg');
+    if (old) old.parentNode.removeChild(old);
+    var p = document.createElement('p');
+    p.className = 'msg warn';
+    p.textContent = text;
+    var h = document.getElementById('modalTitle');
+    h.parentNode.insertBefore(p, h.nextSibling);
+  }
+
+  function takenMessage(list) {
+    return '<p class="msg warn">不好意思，這些書剛剛被認領了，已幫你移除：<br>' +
+      list.map(function (t) { return '・' + esc(t.title) + '（' + esc(t.by) + '）'; }).join('<br>') + '</p>';
+  }
+
+  function takenFrom(ids, claims) {
+    return ids.filter(function (id) { return claims[id]; }).map(function (id) {
+      return { id: id, title: (bookById(id) || {}).title || id, by: claims[id].name };
+    });
+  }
+
+  function submit() {
+    var name = document.getElementById('nameInput').value.trim();
+    var pick = document.querySelector('input[name="pickup"]:checked');
+    if (!name) { formError('請填寫名字'); document.getElementById('nameInput').focus(); return; }
+    if (!pick) { formError('請選擇取書方式'); return; }
+    var ids = selectedIds();
+    var btn = document.getElementById('submitBtn');
+    busy = true; btn.disabled = true; btn.textContent = '檢查中…';
+
+    // 送出前先看最新狀況
+    call('getClaims').then(function (claims) {
+      var taken = takenFrom(ids, claims);
+      if (taken.length) {
+        busy = false;
+        applyClaims(claims);
+        openForm(takenMessage(taken));
+        return;
+      }
+      btn.textContent = '送出中…';
+      return call('claim', name, pick.value, ids).then(function (res) {
+        busy = false;
+        if (res.claims) applyClaims(res.claims);
+        if (res.ok) {
+          saveName(name);
+          showDone(res.claimed, pick.value);
+        } else if (res.taken) {
+          openForm(takenMessage(res.taken));
+        } else {
+          btn.disabled = false; btn.textContent = '送出認領';
+          formError(res.error || '送出失敗，請再試一次');
+        }
+      });
+    }).catch(function () {
+      busy = false; btn.disabled = false; btn.textContent = '送出認領';
+      formError('連線有問題，請再按一次送出');
+    });
+  }
+
+  function showDone(ids, pickup) {
+    ids.forEach(function (id) { delete selected[id]; });
+    render();
+    document.getElementById('modal').innerHTML =
+      '<h3 id="modalTitle">認領成功！</h3>' +
+      '<p class="msg ok">共 ' + ids.length + ' 本，取書方式：' + esc(pickup) + '</p>' +
+      '<ul class="picked">' + ids.map(function (id) { return '<li><span>' + esc((bookById(id) || {}).title || id) + '</span></li>'; }).join('') + '</ul>' +
+      '<p class="sec-note">建議截圖留存。如果需要更改，請直接跟我說。</p>' +
+      '<div class="actions"><button class="btn" type="button" id="cancelBtn">好</button></div>';
+    document.getElementById('modalBg').classList.add('show');
+  }
+
+  // ---------- 事件 ----------
+  document.getElementById('list').addEventListener('click', function (e) {
+    var el = e.target.closest('.pick');
+    if (!el || el.disabled) return;
+    var id = el.getAttribute('data-id');
+    if (selected[id]) delete selected[id]; else selected[id] = true;
+    render();
+  });
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var t = e.target.closest('.tab');
+    if (!t) return;
+    filterCat = t.getAttribute('data-cat');
+    render();
+  });
+  document.getElementById('onlyFree').addEventListener('change', function (e) { onlyFree = e.target.checked; render(); });
+  document.getElementById('clearBtn').addEventListener('click', function () { selected = {}; render(); });
+  document.getElementById('openBtn').addEventListener('click', function () {
+    var ids = selectedIds();
+    openForm();
+    // 表單先打開，同時在背景檢查有沒有書剛被領走
+    call('getClaims').then(function (claims) {
+      if (busy || !isOpen()) return;
+      var taken = takenFrom(ids, claims);
+      applyClaims(claims);
+      if (taken.length) openForm(takenMessage(taken));
+    }).catch(function () {});
+  });
+  document.getElementById('modalBg').addEventListener('click', function (e) {
+    if (e.target.id === 'modalBg' || e.target.id === 'cancelBtn') closeModal();
+    if (e.target.id === 'submitBtn') submit();
+    var rm = e.target.getAttribute && e.target.getAttribute('data-remove');
+    if (rm) { delete selected[rm]; render(); openForm(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !busy) refreshClaims(); });
+
+  loadAll();
+  setInterval(function () { if (!busy && !document.hidden) refreshClaims(); }, REFRESH_MS);
+</script>
+</body>
+</html>
